@@ -6,6 +6,8 @@ const logger = require("morgan");
 
 require("./config/db.config"); // es como si pusieramos todas las lineas del db.confgi aquí, pero somos mejores que eso.
 
+const { sessionConfig, loggedUser } = require("./config/session.config");
+
 const app = express();
 
 hbs.registerHelper("castContains", function (options) {
@@ -17,6 +19,7 @@ hbs.registerHelper("castContains", function (options) {
     return options.inverse(this);
   }
 });
+
 app.use(logger("dev"));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
@@ -25,6 +28,9 @@ app.set("views", __dirname + "/views");
 app.set("view engine", "hbs");
 
 hbs.registerPartials(__dirname + "/views/partials");
+
+app.use(sessionConfig);
+app.use(loggedUser);
 
 const routes = require("./routes/main");
 app.use("/", routes);

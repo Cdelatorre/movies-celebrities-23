@@ -7,18 +7,22 @@ const EMAIL_PATTERN =
 const UserSchema = mongoose.Schema({
   username: {
     type: String,
-    required: true,
+    required: [true, "Username is required"],
   },
   email: {
     type: String,
-    required: true,
+    required: [true, "Email is required"],
     unique: true,
-    match: EMAIL_PATTERN,
+    match: [EMAIL_PATTERN, "Email is invalid"],
   },
   password: {
     type: String,
-    required: true,
-    minLength: 8,
+    required: [true, "Password is required"],
+    minLength: [8, "Password must be 8 characters or longer"],
+  },
+  isAdmin: {
+    type: Boolean,
+    default: false,
   },
 });
 

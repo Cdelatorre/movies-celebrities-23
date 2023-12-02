@@ -1,4 +1,5 @@
 const User = require("../models/User.model");
+const mongoose = require("mongoose");
 
 module.exports.register = (req, res, next) => {
   res.render("users/register");
@@ -9,11 +10,39 @@ module.exports.login = (req, res, next) => {
 };
 
 module.exports.doRegister = (req, res, next) => {
-  User.create(req.body)
-    .then(() => {
-      res.redirect("/login");
-    })
-    .catch((err) => next(err));
+  const { email, username } = req.body;
+
+  User.findOne({ email }).then((dbUser) => {
+    if (dbUser) {
+      res.render("users/register", {
+        user: {
+          email,
+          username,
+        },
+        errors: {
+          email: "Este email ya esta en uso!",
+        },
+      });
+    } else {
+      User.create(req.body)
+        .then(() => {
+          res.redirect("/login");
+        })
+        .catch((err) => {
+          if (err instanceof mongoose.Error.ValidationError) {
+            res.render("users/register", {
+              user: {
+                email,
+                username,
+              },
+              errors: err.errors, // {  EMAIL: 'lo que sea', PASSWOR: '', USERNAME: ''}
+            });
+          } else {
+            next(err);
+          }
+        });
+    }
+  });
 };
 
 module.exports.doLogin = (req, res, next) => {
@@ -31,8 +60,8 @@ module.exports.doLogin = (req, res, next) => {
       if (user) {
         return user.checkPassword(password).then((match) => {
           if (match) {
-            console.log("Te has logueado bien!!");
-            res.redirect(`/profile/${user._id}`);
+            req.session.userId = user.id; // genero cookie y session
+            res.redirect(`/profile`);
           } else {
             console.log("Email o contraseña incorrectos"); // contraseña incorrecta
             renderWithErrors();
@@ -47,11 +76,10 @@ module.exports.doLogin = (req, res, next) => {
 };
 
 module.exports.profile = (req, res, next) => {
-  const id = req.params.id;
+  res.render("users/profile");
+};
 
-  User.findById(id)
-    .then((user) => {
-      res.render("users/profile", { user });
-    })
-    .catch((err) => next(err));
+module.exports.logout = (req, res, next) => {
+  req.session.destroy();
+  res.redirect("/");
 };
